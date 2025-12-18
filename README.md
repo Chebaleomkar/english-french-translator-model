@@ -3,83 +3,120 @@
 ![AI Powered](https://img.shields.io/badge/AI-Powered-blueviolet?style=for-the-badge)
 ![Transformers](https://img.shields.io/badge/Hugging%20Face-Transformers-yellow?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104.0-green?style=for-the-badge)
 
-A robust and efficient Neutral Machine Translation (NMT) model fine-tuned for translating English text into French. This project leverages the power of the **Helsinki-NLP/opus-mt-en-fr** pre-trained model and fine-tunes it on the **Opus Books** dataset to achieve high-quality translations.
+A robust and efficient Neutral Machine Translation (NMT) model fine‑tuned for translating English text into French. This project leverages the **Helsinki‑NLP/opus‑mt‑en‑fr** pre‑trained model, fine‑tuned on the **Opus Books** dataset, and now ships with a lightweight **FastAPI** backend for easy deployment.
 
 ---
 
 ## 🚀 Features
 
-- **Fine-Tuned Precision**: Optimized using the Opus Books dataset for literary-style translations.
-- **State-of-the-Art Architecture**: Built on top of the MarianMT architecture.
-- **Easy Integration**: Uses Hugging Face's `pipeline` for seamless translation.
-- **Evaluation Metrics**: rigorously evaluated using BLEU scores with `sacrebleu`.
+- **Fine‑Tuned Precision** – Optimized using the Opus Books dataset for literary‑style translations.
+- **State‑of‑the‑Art Architecture** – Built on top of the MarianMT architecture.
+- **FastAPI Backend** – Ready‑to‑use REST API for single and batch translations.
+- **Easy Integration** – Uses Hugging Face `pipeline` for seamless translation.
+- **Evaluation Metrics** – Rigorously evaluated using BLEU scores with `sacrebleu`.
 
 ## 🛠️ Technology Stack
 
 - **Python**
 - **Hugging Face Transformers**
 - **Datasets** (Hugging Face)
-- **Evaluate** & **SacreBLEU**
-- **PyTorch** / **TensorFlow** (Backend)
+- **Evaluate & SacreBLEU**
+- **PyTorch / TensorFlow** (backend)
+- **FastAPI & Uvicorn** (API server)
 
 ## 📦 Installation & Requirements
 
-To run this model locally or in a notebook environment, ensure you have the following dependencies installed:
+```bash
+# Install all dependencies (including the API server)
+pip install -r requirements.txt
+```
+
+## 📂 Repository Structure
+
+```
+├─ app.py               # FastAPI server exposing the translation model
+├─ requirements.txt     # Python dependencies
+├─ my_translation_model # Fine‑tuned model files (config, tokenizer, weights)
+├─ model.ipynb          # Jupyter notebook used for training
+├─ README.md            # This documentation
+└─ .gitignore          # Ignores virtual env & caches
+```
+
+## ▶️ Running the API Server
 
 ```bash
-pip install transformers datasets evaluate sacrebleu torch
+# Activate your virtual environment if you have one
+# python -m venv venv && source venv/bin/activate   (Windows: venv\Scripts\activate)
+
+# Start the server
+python app.py
+```
+The server will be available at `http://localhost:8000`. Swagger UI can be accessed at `http://localhost:8000/docs`.
+
+## 📡 API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET`  | `/` | Health check – returns service status and available endpoints |
+| `GET`  | `/health` | Detailed health check with model metadata |
+| `POST` | `/translate` | Translate a single English sentence to French |
+| `POST` | `/translate/batch` | Translate a list of English sentences (max 50 per request) |
+
+### Request / Response examples
+#### Single translation
+```json
+POST /translate
+{
+  "text": "Hello, how are you?",
+  "max_length": 128
+}
+```
+```json
+Response:
+{
+  "original_text": "Hello, how are you?",
+  "translated_text": "Bonjour, comment allez‑vous?",
+  "source_language": "en",
+  "target_language": "fr"
+}
+```
+#### Batch translation
+```json
+POST /translate/batch
+{
+  "texts": ["I love reading books.", "Machine learning is fascinating."],
+  "max_length": 128
+}
+```
+```json
+Response:
+{
+  "translations": [
+    {"original_text": "I love reading books.", "translated_text": "J'aime lire des livres."},
+    {"original_text": "Machine learning is fascinating.", "translated_text": "L'apprentissage automatique est fascinant."}
+  ]
+}
 ```
 
-## 📖 Dataset
-
-The model is trained on the **[Opus Books](https://huggingface.co/datasets/opus_books)** dataset, specifically the English-to-French (`en-fr`) subset.
-
-- **Source**: English
-- **Target**: French
-- **Splits**: The dataset is split into training and testing sets (10% for testing) to ensure robust evaluation.
-
-## 🧠 Model Training
+## 🧠 Model Training (unchanged)
 
 The training process involves:
-1.  **Tokenizer**: Using `MarianTokenizer` to process inputs.
-2.  **Model**: `MarianMTModel` pre-trained on English-French.
-3.  **Preprocessing**: Text truncation and padding to a max length of 128 tokens.
-4.  **Training**: Fine-tuning using `Seq2SeqTrainer` with `fp16` mixed precision for efficiency.
+1. **Tokenizer** – `MarianTokenizer`
+2. **Model** – `MarianMTModel` pre‑trained on English‑French
+3. **Pre‑processing** – truncation & padding to a max length of 128 tokens
+4. **Fine‑tuning** – `Seq2SeqTrainer` with mixed‑precision (`fp16`)
 
-### Hyperparameters (Example)
-- **Learning Rate**: `3e-5`
-- **Batch Size**: 8
-- **Epochs**: 1
-- **Weight Decay**: 0.01
-
-## 💻 Usage
-
-Run the Jupyter Notebook `model.ipynb` to train the model. Once trained, you can use the model for inference as follows:
-
-```python
-from transformers import pipeline
-
-# Load the fine-tuned model (assuming it's loaded in memory or saved)
-translator = pipeline("translation", model=model, tokenizer=tokenizer)
-
-text = "Machine learning is fascinating."
-translation = translator(text, max_length=128)
-
-print(f"English: {text}")
-print(f"French: {translation[0]['translation_text']}")
-```
-
-**Output:**
-```
-English: Machine learning is fascinating.
-French: L'apprentissage automatique est fascinant.
-```
+### Hyper‑parameters (example)
+- Learning Rate: `3e-5`
+- Batch Size: `8`
+- Epochs: `1`
+- Weight Decay: `0.01`
 
 ## 📊 Evaluation
 
-The model performance is evaluated using the **BLEU** score, a standard metric for machine translation quality.
-
+The model performance is evaluated using the **BLEU** score:
 ```python
 results = trainer.evaluate()
 print(f"Final BLEU Score: {results['eval_bleu']:.2f}")
@@ -87,7 +124,10 @@ print(f"Final BLEU Score: {results['eval_bleu']:.2f}")
 
 ## 💾 Saving the Model
 
-The trained model is saved to the `./my_finetuned_en_fr_translator` directory and can be zipped for deployment or transfer using `shutil`.
+The fine‑tuned model is saved to `./my_finetuned_en_fr_translator` and can be zipped for deployment:
+```bash
+zip -r my_translation_model.zip my_finetuned_en_fr_translator
+```
 
 ---
 
